@@ -8,6 +8,7 @@ class DataParser {
     this.rawData = null;
     this.membershipData = {};
     this.stateCodeMap = this.createStateCodeMap();
+    this.stateColors = this.createStateColorMap();
   }
 
   /**
@@ -25,6 +26,7 @@ class DataParser {
       'Delaware': 'DE',
       'DC': 'DC',
       'District of Columbia': 'DC',
+      'Washington DC': 'DC',
       'Florida': 'FL',
       'Georgia': 'GA',
       'Hawaii': 'HI',
@@ -69,6 +71,69 @@ class DataParser {
       'West Virginia': 'WV',
       'Wisconsin': 'WI',
       'Wyoming': 'WY'
+    };
+  }
+
+  /**
+   * Create mapping of state names to official state colors
+   */
+  createStateColorMap() {
+    return {
+      'Alabama': '#C8102E',
+      'Alaska': '#0052A5',
+      'Arizona': '#B95A2B',
+      'Arkansas': '#B31942',
+      'California': '#003595',
+      'Colorado': '#002868',
+      'Connecticut': '#00247D',
+      'Delaware': '#003087',
+      'District of Columbia': '#E4002B',
+      'DC': '#E4002B',
+      'Washington DC': '#E4002B',
+      'Florida': '#FF6347',
+      'Georgia': '#C8102E',
+      'Hawaii': '#003366',
+      'Idaho': '#0047AB',
+      'Illinois': '#003E7E',
+      'Indiana': '#002F6C',
+      'Iowa': '#002F6C',
+      'Kansas': '#003087',
+      'Kentucky': '#002F6C',
+      'Louisiana': '#00205B',
+      'Maine': '#003E7E',
+      'Maryland': '#C60C30',
+      'Mass': '#003366',
+      'Massachusetts': '#003366',
+      'Michigan': '#0F4D92',
+      'Minnesota': '#003F87',
+      'Mississippi': '#002147',
+      'Missouri': '#003F87',
+      'Montana': '#003F87',
+      'Montana (1/1/11 start)': '#003F87',
+      'Nebraska': '#003087',
+      'Nevada': '#003893',
+      'New Hampshire': '#002868',
+      'New Jersey': '#003087',
+      'New Mexico': '#FFD700',
+      'New York': '#003F87',
+      'North Carolina': '#002868',
+      'North Dakota': '#0052A5',
+      'Ohio': '#C8102E',
+      'Oklahoma': '#006747',
+      'Oregon': '#003F87',
+      'Pennsylvania': '#003D82',
+      'Rhode Island': '#003087',
+      'South Carolina': '#003087',
+      'South Dakota': '#003F87',
+      'Tennessee': '#003F87',
+      'Texas': '#00205B',
+      'Utah': '#002868',
+      'Vermont': '#00693E',
+      'Virginia': '#002868',
+      'Washington': '#00843D',
+      'West Virginia': '#003087',
+      'Wisconsin': '#0047AB',
+      'Wyoming': '#003087'
     };
   }
 
@@ -123,7 +188,8 @@ class DataParser {
         this.membershipData[stateCode] = {
           name: stateName,
           code: stateCode,
-          years: {}
+          years: {},
+          total: 0
         };
       }
 
@@ -134,6 +200,12 @@ class DataParser {
         const isMember = value && value !== '' && value !== '0';
         this.membershipData[stateCode].years[year] = isMember;
       });
+
+      // Parse Total column (last column)
+      const totalValue = values[values.length - 1]?.trim();
+      if (totalValue && totalValue !== '') {
+        this.membershipData[stateCode].total = parseFloat(totalValue);
+      }
     }
   }
 
@@ -210,6 +282,77 @@ class DataParser {
    */
   getAllStateCodes() {
     return Object.keys(this.membershipData);
+  }
+
+  /**
+   * Get total years of membership for a state
+   * @param {string} stateCode - Two-letter state code
+   * @returns {number} Total years
+   */
+  getTotal(stateCode) {
+    return this.membershipData[stateCode]?.total || 0;
+  }
+
+  /**
+   * Get canonical full state name from state code
+   * @param {string} stateCode - Two-letter state code
+   * @returns {string} Full state name
+   */
+  getCanonicalStateName(stateCode) {
+    const canonicalNames = {
+      'AL': 'Alabama',
+      'AK': 'Alaska',
+      'AZ': 'Arizona',
+      'AR': 'Arkansas',
+      'CA': 'California',
+      'CO': 'Colorado',
+      'CT': 'Connecticut',
+      'DE': 'Delaware',
+      'DC': 'District of Columbia',
+      'FL': 'Florida',
+      'GA': 'Georgia',
+      'HI': 'Hawaii',
+      'ID': 'Idaho',
+      'IL': 'Illinois',
+      'IN': 'Indiana',
+      'IA': 'Iowa',
+      'KS': 'Kansas',
+      'KY': 'Kentucky',
+      'LA': 'Louisiana',
+      'ME': 'Maine',
+      'MD': 'Maryland',
+      'MA': 'Massachusetts',
+      'MI': 'Michigan',
+      'MN': 'Minnesota',
+      'MS': 'Mississippi',
+      'MO': 'Missouri',
+      'MT': 'Montana',
+      'NE': 'Nebraska',
+      'NV': 'Nevada',
+      'NH': 'New Hampshire',
+      'NJ': 'New Jersey',
+      'NM': 'New Mexico',
+      'NY': 'New York',
+      'NC': 'North Carolina',
+      'ND': 'North Dakota',
+      'OH': 'Ohio',
+      'OK': 'Oklahoma',
+      'OR': 'Oregon',
+      'PA': 'Pennsylvania',
+      'RI': 'Rhode Island',
+      'SC': 'South Carolina',
+      'SD': 'South Dakota',
+      'TN': 'Tennessee',
+      'TX': 'Texas',
+      'UT': 'Utah',
+      'VT': 'Vermont',
+      'VA': 'Virginia',
+      'WA': 'Washington',
+      'WV': 'West Virginia',
+      'WI': 'Wisconsin',
+      'WY': 'Wyoming'
+    };
+    return canonicalNames[stateCode] || stateCode;
   }
 }
 

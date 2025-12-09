@@ -56,10 +56,14 @@ header {
 }
 
 h1 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--text-dark);
+font-weight: 900;
+  font-size: 3rem;
+  color: #0178AF;
   margin-bottom: 10px;
+}
+
+h2 {
+  color: #0178AF;
 }
 
 /* Map and Controls Section */
@@ -86,7 +90,6 @@ h1 {
 
 .slider-label {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
 }
@@ -100,6 +103,7 @@ h1 {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--member-color);
+  margin-left: 1rem;
 }
 
 /* Year Slider */
@@ -234,7 +238,7 @@ h1 {
 .years-section h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: #0178AF;
   margin: 0;
 }
 

@@ -56,6 +56,10 @@ class SELNMapApp {
       // Render initial map
       this.updateMap(this.currentYear);
 
+      // Initialize and render bar chart
+      this.initializeBarChart();
+      this.updateBarChart(this.currentYear);
+
       // Hide loading state
       this.hideLoading();
 
@@ -265,6 +269,151 @@ class SELNMapApp {
   }
 
   /**
+   * Initialize the bar chart
+   */
+  initializeBarChart() {
+    const container = d3.select('#years-content');
+    container.html(''); // Clear loading text
+
+    // Create responsive SVG
+    this.barChartSvg = container
+      .append('svg')
+      .attr('id', 'bar-chart-svg')
+      .attr('width', '100%')
+      .attr('role', 'img')
+      .attr('aria-label', 'Bar chart showing years of SELN membership by state');
+
+    // Create defs for gradient
+    const defs = this.barChartSvg.append('defs');
+
+    // Define horizontal gradient from blue to green
+    const gradient = defs.append('linearGradient')
+      .attr('id', 'bar-gradient')
+      .attr('x1', '0%')
+      .attr('x2', '100%')
+      .attr('y1', '0%')
+      .attr('y2', '0%');
+
+    gradient.append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', '#0178AF');
+
+    gradient.append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', '#5D9632');
+
+    // Create group for bars
+    this.barChartSvg.append('g').attr('class', 'bars');
+  }
+
+  /**
+   * Update bar chart for a specific year
+   * @param {number} year - Year to display data for
+   */
+  updateBarChart(year) {
+    if (!this.barChartSvg) return;
+
+    // Get data for all states with membership years
+    const data = [];
+    this.dataParser.getAllStateCodes().forEach(stateCode => {
+      const total = this.dataParser.getTotal(stateCode);
+
+      if (total > 0) {
+        const canonicalName = this.dataParser.getCanonicalStateName(stateCode);
+        data.push({
+          name: canonicalName,
+          years: total,
+          color: this.memberColor  // Use green for all bars
+        });
+      }
+    });
+
+    // Sort by years descending
+    data.sort((a, b) => b.years - a.years);
+
+    // Chart dimensions
+    const margin = { top: 10, right: 80, bottom: 10, left: 150 };
+    const containerWidth = document.getElementById('years-content').clientWidth;
+    const width = containerWidth - margin.left - margin.right;
+    const barHeight = 25;
+    const barPadding = 5;
+    const height = data.length * (barHeight + barPadding);
+
+    // Update SVG height
+    this.barChartSvg.attr('height', height + margin.top + margin.bottom);
+
+    // Create scales
+    const xScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.years)])
+      .range([0, width]);
+
+    // Select/create bars group with margin
+    let barsGroup = this.barChartSvg.select('.bars');
+    if (barsGroup.empty()) {
+      barsGroup = this.barChartSvg.append('g').attr('class', 'bars');
+    }
+    barsGroup.attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Bind data
+    const bars = barsGroup.selectAll('g.bar-group')
+      .data(data, d => d.name);
+
+    // Enter + Update
+    const barGroups = bars.enter()
+      .append('g')
+      .attr('class', 'bar-group')
+      .merge(bars)
+      .attr('transform', (d, i) => `translate(0,${i * (barHeight + barPadding)})`);
+
+    // State labels (on the left)
+    barGroups.selectAll('text.state-label')
+      .data(d => [d])
+      .join('text')
+      .attr('class', 'state-label')
+      .attr('x', -10)
+      .attr('y', barHeight / 2)
+      .attr('text-anchor', 'end')
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', 'Verdana')
+      .style('font-size', '12px')
+      .style('fill', '#333')
+      .text(d => d.name);
+
+    // Bars with gradient
+    barGroups.selectAll('rect')
+      .data(d => [d])
+      .join('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('height', barHeight)
+      .attr('fill', 'url(#bar-gradient)')
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 1)
+      .transition()
+      .duration(500)
+      .attr('width', d => xScale(d.years));
+
+    // Year labels (at the end of bars)
+    barGroups.selectAll('text.year-label')
+      .data(d => [d])
+      .join('text')
+      .attr('class', 'year-label')
+      .attr('y', barHeight / 2)
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', 'Verdana')
+      .style('font-size', '12px')
+      .style('font-weight', 'bold')
+      .style('fill', '#333')
+      .transition()
+      .duration(500)
+      .attr('x', d => xScale(d.years) + 5)
+      .text(d => d.years);
+
+    // Remove old bars
+    bars.exit().remove();
+  }
+
+  /**
    * Get state code from state name
    * @param {string} stateName - Full state name
    * @returns {string|null} Two-letter state code or null
@@ -343,6 +492,9 @@ class SELNMapApp {
 
     // Update map
     this.updateMap(year);
+
+    // Update bar chart
+    this.updateBarChart(year);
 
     // Update ARIA live region for screen readers
     this.updateAriaLiveRegion(`Showing data for ${year}`);
