@@ -1,15 +1,35 @@
 /**
  * Main Application Module
- * Initializes and coordinates the SELN Map Timeline application
+ * SELN Map Timeline with D3.js Choropleth Map
  */
 
 class SELNMapApp {
   constructor() {
     this.dataParser = null;
-    this.mapController = null;
+    this.usStates = null;
+    this.svg = null;
+    this.path = null;
     this.minYear = 2007;
     this.maxYear = 2026;
     this.currentYear = 2007;
+    this.memberColor = '#5D9632';
+    this.nonMemberColor = '#CCCCCC';
+    this.width = 975;
+    this.height = 610;
+
+    // Small states that need external labels with leader lines
+    this.smallStates = {
+      'Maine': { offset: [80, -50] },
+      'Vermont': { offset: [80, -40] },
+      'New Hampshire': { offset: [80, -30] },
+      'Massachusetts': { offset: [80, -15] },
+      'Rhode Island': { offset: [80, 0] },
+      'Connecticut': { offset: [80, 15] },
+      'New Jersey': { offset: [80, 30] },
+      'Delaware': { offset: [80, 45] },
+      'Maryland': { offset: [80, 60] },
+      'District of Columbia': { offset: [80, 75] }
+    };
   }
 
   /**
@@ -24,12 +44,17 @@ class SELNMapApp {
       this.dataParser = new DataParser();
       await this.dataParser.loadCSV('data/seln-by-year.csv');
 
-      // Initialize map controller
-      this.mapController = new MapController(this.dataParser);
-      this.mapController.init('map-container');
+      // Load US states TopoJSON
+      await this.loadGeoData();
+
+      // Initialize the map
+      this.initializeMap();
 
       // Setup year slider
       this.setupYearSlider();
+
+      // Render initial map
+      this.updateMap(this.currentYear);
 
       // Hide loading state
       this.hideLoading();
@@ -41,6 +66,231 @@ class SELNMapApp {
       console.error('Error initializing application:', error);
       this.showError('Failed to load application. Please refresh the page.');
     }
+  }
+
+  /**
+   * Load US states TopoJSON data
+   */
+  async loadGeoData() {
+    try {
+      // Load TopoJSON from US Atlas
+      const us = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json');
+
+      // Convert TopoJSON to GeoJSON
+      this.usStates = topojson.feature(us, us.objects.states).features;
+
+      console.log('Loaded US states:', this.usStates.length, 'states');
+
+      // Debug: Log all state names from TopoJSON
+      console.log('State names in TopoJSON:', this.usStates.map(d => d.properties.name));
+
+      // Debug: Check which states we can match
+      const matched = [];
+      const unmatched = [];
+      this.usStates.forEach(d => {
+        const stateCode = this.getStateCodeFromName(d.properties.name);
+        if (stateCode) {
+          matched.push(d.properties.name);
+        } else {
+          unmatched.push(d.properties.name);
+        }
+      });
+      console.log('Matched states:', matched.length, matched);
+      console.log('Unmatched states:', unmatched.length, unmatched);
+
+    } catch (error) {
+      console.error('Error loading geo data:', error);
+      throw new Error('Failed to load map data');
+    }
+  }
+
+  /**
+   * Initialize D3.js SVG and projection
+   */
+  initializeMap() {
+    // Select the SVG element
+    // Use a larger viewBox to accommodate external labels
+    this.svg = d3.select('#map-svg')
+      .attr('viewBox', `0 0 1100 ${this.height}`)
+      .attr('width', '100%')
+      .attr('height', 'auto')
+      .attr('preserveAspectRatio', 'xMidYMid meet');
+
+    // Create path generator (data is pre-projected in Albers USA)
+    this.path = d3.geoPath();
+
+    // Create group for states
+    this.svg.append('g')
+      .attr('class', 'states');
+
+    // Create group for leader lines
+    this.svg.append('g')
+      .attr('class', 'leader-lines');
+
+    // Create group for labels
+    this.svg.append('g')
+      .attr('class', 'labels');
+  }
+
+  /**
+   * Update map for a specific year
+   * @param {number} year - Year to display
+   */
+  updateMap(year) {
+    this.currentYear = year;
+
+    // Update states
+    const states = this.svg.select('.states')
+      .selectAll('path')
+      .data(this.usStates)
+      .join('path')
+      .attr('d', this.path)
+      .attr('class', 'state')
+      .attr('fill', d => {
+        const stateName = d.properties.name;
+        const stateCode = this.getStateCodeFromName(stateName);
+        const isMember = stateCode ? this.dataParser.isMember(stateCode, year) : false;
+        return isMember ? this.memberColor : this.nonMemberColor;
+      })
+      .attr('stroke', 'white')
+      .attr('stroke-width', 0.5)
+      .style('cursor', 'pointer')
+      .on('mouseover', (event, d) => this.handleStateHover(event, d))
+      .on('mouseout', () => this.handleStateOut());
+
+    // Separate states into regular and small states
+    const regularStates = this.usStates.filter(d => !this.smallStates[d.properties.name]);
+    const smallStatesData = this.usStates.filter(d => this.smallStates[d.properties.name]);
+
+    // Update regular state labels (centered inside)
+    this.svg.select('.labels')
+      .selectAll('text.regular-label')
+      .data(regularStates)
+      .join('text')
+      .attr('class', 'state-label regular-label')
+      .attr('transform', d => {
+        const centroid = this.path.centroid(d);
+        return `translate(${centroid[0]}, ${centroid[1]})`;
+      })
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', 'Verdana')
+      .style('font-size', '10px')
+      .style('fill', '#000')
+      .style('pointer-events', 'none')
+      .text(d => {
+        const stateName = d.properties.name;
+        return this.getStateCodeFromName(stateName) || '';
+      });
+
+    // Update leader lines for small states
+    this.svg.select('.leader-lines')
+      .selectAll('line')
+      .data(smallStatesData)
+      .join('line')
+      .attr('class', 'leader-line')
+      .attr('x1', d => this.path.centroid(d)[0])
+      .attr('y1', d => this.path.centroid(d)[1])
+      .attr('x2', d => {
+        const centroid = this.path.centroid(d);
+        const offset = this.smallStates[d.properties.name].offset;
+        return centroid[0] + offset[0];
+      })
+      .attr('y2', d => {
+        const centroid = this.path.centroid(d);
+        const offset = this.smallStates[d.properties.name].offset;
+        return centroid[1] + offset[1];
+      })
+      .attr('stroke', '#666')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '2,2');
+
+    // Update external labels for small states
+    this.svg.select('.labels')
+      .selectAll('text.external-label')
+      .data(smallStatesData)
+      .join('text')
+      .attr('class', 'state-label external-label')
+      .attr('transform', d => {
+        const centroid = this.path.centroid(d);
+        const offset = this.smallStates[d.properties.name].offset;
+        return `translate(${centroid[0] + offset[0]}, ${centroid[1] + offset[1]})`;
+      })
+      .attr('text-anchor', d => {
+        const offset = this.smallStates[d.properties.name].offset;
+        return offset[0] > 0 ? 'start' : 'end';
+      })
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', 'Verdana')
+      .style('font-size', '10px')
+      .style('font-weight', 'bold')
+      .style('fill', '#000')
+      .style('pointer-events', 'none')
+      .text(d => {
+        const stateName = d.properties.name;
+        return this.getStateCodeFromName(stateName) || '';
+      });
+  }
+
+  /**
+   * Handle state hover event
+   * @param {Event} event - Mouse event
+   * @param {Object} d - State data
+   */
+  handleStateHover(event, d) {
+    const stateName = d.properties.name;
+    const stateCode = this.getStateCodeFromName(stateName);
+
+    if (!stateCode) return;
+
+    const isMember = this.dataParser.isMember(stateCode, this.currentYear);
+    const years = this.dataParser.getCumulativeYears(stateCode, this.currentYear);
+
+    // Highlight state
+    d3.select(event.currentTarget)
+      .attr('opacity', 0.8);
+
+    // Show tooltip (you can enhance this with a proper tooltip library)
+    const tooltip = `${stateName}: ${isMember ? 'SELN Member' : 'Not a member'} (${years} years)`;
+    console.log(tooltip); // For now, just log it
+  }
+
+  /**
+   * Handle state mouse out event
+   */
+  handleStateOut() {
+    // Remove highlight
+    this.svg.selectAll('.state')
+      .attr('opacity', 1);
+  }
+
+  /**
+   * Get state code from state name
+   * @param {string} stateName - Full state name
+   * @returns {string|null} Two-letter state code or null
+   */
+  getStateCodeFromName(stateName) {
+    const stateCodeMap = this.dataParser.stateCodeMap;
+
+    // Direct match
+    if (stateCodeMap[stateName]) {
+      return stateCodeMap[stateName];
+    }
+
+    // Case-insensitive match
+    for (const [name, code] of Object.entries(stateCodeMap)) {
+      if (name.toLowerCase() === stateName.toLowerCase()) {
+        return code;
+      }
+    }
+
+    // Special case: District of Columbia
+    if (stateName === 'District of Columbia' || stateName === 'D.C.') {
+      return 'DC';
+    }
+
+    console.warn(`No state code found for: ${stateName}`);
+    return null;
   }
 
   /**
@@ -71,7 +321,6 @@ class SELNMapApp {
     // Handle keyboard navigation
     slider.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        // Let browser handle, but announce change
         setTimeout(() => {
           this.announceToScreenReader(`Year ${this.currentYear}`);
         }, 100);
@@ -93,9 +342,7 @@ class SELNMapApp {
     }
 
     // Update map
-    if (this.mapController) {
-      this.mapController.updateMap(year);
-    }
+    this.updateMap(year);
 
     // Update ARIA live region for screen readers
     this.updateAriaLiveRegion(`Showing data for ${year}`);
@@ -127,6 +374,7 @@ class SELNMapApp {
    * @param {string} message - Error message
    */
   showError(message) {
+    this.hideLoading();
     const errorElement = document.getElementById('error');
     if (errorElement) {
       errorElement.textContent = message;

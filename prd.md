@@ -7,10 +7,13 @@ An interactive, accessible web-based map visualization showing State Employment 
 - **HTML5** - Semantic, accessible markup
 - **CSS3** - Styling and layout
 - **JavaScript (ES6+)** - Interactivity and data processing
-- **SVG Map** - SimpleMaps free US map (https://simplemaps.com/resources/svg-us)
-  - License: Free for commercial use
-  - Copyright: © 2017 Pareto Software, LLC DBA SimpleMaps.com
-  - File: `assets/us.svg`
+- **D3.js v7** - Data visualization library for SVG generation and geographic projections
+  - License: ISC License (permissive, similar to MIT)
+  - CDN: https://d3js.org/
+  - Modules: d3-geo, d3-selection, d3-scale, d3-fetch
+- **TopoJSON** - Efficient geographic data format
+  - US Atlas 3.x for US state boundaries
+  - Albers USA projection for optimal US map display
 
 ## Design & Typography
 - **Font Family**: Verdana, Geneva, Tahoma, sans-serif (system fonts, no external dependencies)
@@ -26,17 +29,17 @@ An interactive, accessible web-based map visualization showing State Employment 
 ## Core Features
 
 ### 1. Interactive Map
-- Display a US map using accessible SVG format from SimpleMaps (`assets/us.svg`)
-- **Source**: SimpleMaps.com free SVG map (https://simplemaps.com/resources/svg-us)
-- **License**: Free for commercial use
-- **Structure**: SVG contains `<path>` elements with two-letter state code IDs (e.g., `<path id="CA">`)
-- **Coverage**: All 50 states plus DC with accurate geographic representation using Lambert Azimuthal Equal-area projection
-- **Dynamic Labels**: State abbreviations are added via JavaScript to ALL states
-  - Two-letter state code displayed at center of each state
-  - Font: Plain Verdana, 10px, with no styling (no weight, no shadow)
-  - Labels use default SVG text color (black) for visibility
-  - Labels are SVG text elements (limited text selection in browsers due to object tag embedding)
-- **Loading**: SVG loaded via `<object>` tag for proper DOM access and manipulation
+- Display a US choropleth map generated dynamically using D3.js
+- **Data Source**: US Atlas TopoJSON (https://cdn.jsdelivr.net/npm/us-atlas@3/)
+- **Projection**: Albers USA (d3.geoAlbersUsa) - optimized for US maps with Alaska and Hawaii positioned appropriately
+- **Structure**: D3.js generates SVG `<path>` elements for each state with proper geographic boundaries
+- **Coverage**: All 50 states plus DC with accurate geographic representation
+- **Dynamic Labels**: State abbreviations rendered via D3.js at geographic centroids
+  - Two-letter state code displayed at true centroid of each state
+  - Font: Plain Verdana, 10px
+  - Labels use path.centroid() for automatic optimal positioning
+  - Handles irregular shapes (MI, FL, HI, etc.) without manual offsets
+- **Rendering**: D3.js dynamically generates SVG with data-driven styling
 
 ### 2. Visual States
 - **All States**: Initially set to grey (`#CCCCCC`)
@@ -56,11 +59,15 @@ An interactive, accessible web-based map visualization showing State Employment 
 - **Display**: Show current year prominently near slider
 
 ### 4. State Information Display
-- **Display**: Each state shows its two-letter abbreviation
-- **Font**: Plain Verdana with no styling
-- **Size**: 10px
-- **Color**: Default SVG text color (black)
-- **Accessibility**: State membership status and cumulative years available via ARIA labels for screen readers
+- **Display**: Each state shows its two-letter abbreviation via D3.js text elements
+- **Font**: Plain Verdana, 10px
+- **Positioning**: Automatic centroid calculation using D3's path.centroid()
+- **Color**: Black text for visibility on all state colors
+- **Tooltips**: D3.js event handlers for hover interactions showing:
+  - State name
+  - Membership status
+  - Cumulative years
+- **Accessibility**: ARIA labels and semantic SVG structure for screen readers
 
 ### 5. Legend
 - Display clear legend explaining:
@@ -71,6 +78,28 @@ An interactive, accessible web-based map visualization showing State Employment 
 ### 6. Title
 - Display clear, descriptive title for the visualization
 - Suggested: "State Employment Leadership Network Membership Timeline (2007-2026)"
+
+### 7. Years of Membership Section
+- **Purpose**: Display cumulative membership data for all states
+- **Location**: Below the map visualization
+- **Implementation**: Horizontal bar chart using D3.js
+- **Display Elements**:
+  - Full state name (not abbreviation)
+  - Horizontal bar showing years of membership
+  - Bar color: Official state color for each state
+  - Total years displayed at end of each bar
+- **Chart Properties**:
+  - Sorted by years of membership (descending)
+  - Responsive width - adapts to container
+  - Only shows states with at least 1 year of membership
+- **Dynamic Updates**: Updates based on current year selected in slider
+  - Bars animate/transition when year changes
+  - Numbers update to show cumulative years up to selected year
+- **Accessibility**:
+  - Semantic SVG structure with proper roles
+  - ARIA labels for chart and individual bars
+  - Screen reader accessible data presentation
+  - Keyboard navigable if interactive
 
 ## Functional Requirements
 
@@ -129,45 +158,53 @@ An interactive, accessible web-based map visualization showing State Employment 
 
 ## Technical Considerations
 
-### SVG Map Structure (SimpleMaps)
-- SimpleMaps SVG uses `<path>` elements with direct ID attributes (e.g., `<path id="CA">`)
-- Each path has `data-name` attribute with full state name (e.g., `data-name="California"`)
-- Each path has `data-id` attribute matching the ID (e.g., `data-id="CA"`)
-- All states are automatically discovered by querying for `path[id]` elements
-- All states are labeled and colored on initialization (grey by default, green for members)
-- State labels (two-letter abbreviations) are dynamically added via JavaScript to ALL states
-- Labels use plain Verdana font, 10px size, with no additional styling (no weight or effects)
-- Font family and size are set directly via JavaScript style attributes (not CSS, due to object tag isolation)
-- Labels use default SVG text color (black) with no fill attribute specified
-- Labels are appended to SVG root element, positioned at center of each state using path bounding boxes
-- Text selection is limited by browser constraints when SVG is in an object tag
+### D3.js Implementation
+- **Library**: D3.js v7 loaded from CDN
+- **Data Format**: TopoJSON from US Atlas 3.x
+  - Loaded from: https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json
+  - Pre-projected Albers USA coordinates for performance
+- **State Mapping**: TopoJSON properties include:
+  - `id` - FIPS code
+  - `name` - Full state name
+- **SVG Generation**:
+  - D3.js path generator creates accurate state boundaries
+  - Geographic centroids calculated via `path.centroid(feature)`
+  - Labels positioned automatically at true geographic centers
+  - No manual offset adjustments needed
+- **Data Binding**: D3's data join pattern for efficient updates
+  - `.data()` binds SELN membership data to state features
+  - `.join()` handles enter/update/exit patterns
+  - Smooth transitions on year changes
+- **Styling**: CSS classes and inline styles applied via D3 selections
+- **Updates**: D3 transition for smooth color changes when year updates
 
 ### Data Handling
-- Ensure SVG map uses standard two-letter state codes for easy data mapping
-- Handle DC as a special case (may need custom mapping)
+- Map CSV state names to TopoJSON state names
+- Handle DC as "District of Columbia"
 - Consider state name variations in CSV (e.g., "Mass" vs "Massachusetts")
-- Plan for efficient re-rendering when slider changes (avoid full page redraws)
+- Use D3 data join for efficient updates when slider changes
+- TopoJSON provides compressed geographic data for faster loading
 
 ### Deployment Requirements
-- **Local Server Required**: Due to CORS restrictions, the application must be served via HTTP server
-- Cannot be opened directly with `file://` protocol (CSV loading will fail)
+- **CDN Dependencies**: D3.js and TopoJSON libraries loaded from CDN (no npm/build required)
+- **Local Server Required**: Due to CORS restrictions for CSV and TopoJSON, must be served via HTTP
+- Cannot be opened directly with `file://` protocol
 - Recommended: `python3 -m http.server 8000` or similar local development server
-- Production: Can be deployed to any standard web hosting service
+- Production: Can be deployed to any standard web hosting service with CDN access
 
 ## File Structure
 ```
 /
-├── index.html          # Main HTML page
+├── index.html          # Main HTML page with D3.js integration
 ├── prd.md              # Product Requirements Document
 ├── README.md           # Project documentation
 ├── css/
 │   └── styles.css     # Responsive styling
 ├── js/
-│   ├── main.js        # Main application logic
-│   ├── dataParser.js  # CSV parsing and data processing
-│   └── mapController.js # Map interaction logic
-├── assets/
-│   └── us.svg         # SimpleMaps SVG map file
+│   ├── main.js        # Main application logic with D3.js map rendering
+│   └── dataParser.js  # CSV parsing and data processing
 └── data/
     └── seln-by-year.csv # SELN membership data
 ```
+
+**Note**: D3.js and TopoJSON are loaded via CDN, no local files needed.

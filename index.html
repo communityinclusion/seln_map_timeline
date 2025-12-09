@@ -16,51 +16,56 @@
   <div class="container">
     <!-- Header -->
     <header>
-      <h1>State Employment Leadership Network Membership Timeline (2007-2026)</h1>
+      <h1>SELN by the Numbers</h1>
     </header>
 
     <!-- Main Content -->
     <main id="main-content">
-      <!-- Year Slider Controls -->
-      <section class="controls" aria-label="Year selection controls">
-        <div class="slider-container">
-          <div class="slider-label">
-            <span>Select Year:</span>
-            <span id="current-year" aria-live="polite">2007</span>
-          </div>
+      
+      <!-- Map and Controls Section -->
+      <section class="map-section" aria-label="Interactive map with year controls">
+          <header>
+      <h2>State Employment Leadership Network Membership Timeline (2007-2026)</h2>
+    </header>
+        <!-- Year Slider Controls -->
+        <div class="controls">
+          <div class="slider-container">
+            <div class="slider-label">
+              <span>Select Year:</span>
+              <span id="current-year" aria-live="polite">2007</span>
+            </div>
 
-          <input
-            type="range"
-            id="year-slider"
-            min="2007"
-            max="2026"
-            value="2007"
-            step="1"
-            aria-label="Year slider from 2007 to 2026"
-            aria-valuemin="2007"
-            aria-valuemax="2026"
-            aria-valuenow="2007"
-            aria-valuetext="2007"
-          >
+            <input
+              type="range"
+              id="year-slider"
+              min="2007"
+              max="2026"
+              value="2007"
+              step="1"
+              aria-label="Year slider from 2007 to 2026"
+              aria-valuemin="2007"
+              aria-valuemax="2026"
+              aria-valuenow="2007"
+              aria-valuetext="2007"
+            >
 
-          <div class="year-range">
-            <span>2007</span>
-            <span>2026</span>
+            <div class="year-range">
+              <span>2007</span>
+              <span>2026</span>
+            </div>
           </div>
         </div>
-      </section>
 
-      <!-- Map Container -->
-      <section id="map-container" role="img" aria-label="United States map showing SELN membership by state">
-        <!-- Loading indicator -->
-        <div id="loading" aria-live="polite" style="position: absolute;">
-          Loading map data...
+        <!-- Map Container -->
+        <div id="map-container" role="img" aria-label="United States map showing SELN membership by state">
+          <!-- Loading indicator -->
+          <div id="loading" aria-live="polite" style="position: absolute;">
+            Loading map data...
+          </div>
+
+          <!-- D3.js will render the SVG map here -->
+          <svg id="map-svg" aria-label="Interactive United States choropleth map"></svg>
         </div>
-
-        <!-- US Map SVG -->
-        <object data="assets/us.svg" type="image/svg+xml" id="us-map" aria-label="Interactive United States map">
-          <p>Your browser does not support SVG. Please use a modern browser to view this visualization.</p>
-        </object>
       </section>
 
       <!-- Legend -->
@@ -75,6 +80,18 @@
         </div>
       </section>
 
+      <!-- Years of Membership Section -->
+      <section class="years-section" aria-label="Years of membership by state">
+        <header>
+          <h2>Years of Membership</h2>
+        </header>
+
+        <div id="years-content">
+          <!-- Content will be populated by JavaScript -->
+          <p class="loading-text">Loading membership data...</p>
+        </div>
+      </section>
+
       <!-- Error Display -->
       <div id="error" role="alert" aria-live="assertive" style="display: none;"></div>
 
@@ -83,9 +100,12 @@
     </main>
   </div>
 
-  <!-- Scripts -->
+  <!-- D3.js and TopoJSON from CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+
+  <!-- Application Scripts -->
   <script src="js/dataParser.js"></script>
-  <script src="js/mapController.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
