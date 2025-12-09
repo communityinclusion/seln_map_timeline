@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive map showing State Employment Leadership Network (SELN) membership timeline from 2007 to 2026">
+  <title>State Employment Leadership Network Membership Timeline (2007-2026)</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Skip to main content link for accessibility -->
+  <a href="#main-content" class="sr-only">Skip to main content</a>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>State Employment Leadership Network Membership Timeline (2007-2026)</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content">
+      <!-- Year Slider Controls -->
+      <section class="controls" aria-label="Year selection controls">
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>Select Year:</span>
+            <span id="current-year" aria-live="polite">2007</span>
+          </div>
+
+          <input
+            type="range"
+            id="year-slider"
+            min="2007"
+            max="2026"
+            value="2007"
+            step="1"
+            aria-label="Year slider from 2007 to 2026"
+            aria-valuemin="2007"
+            aria-valuemax="2026"
+            aria-valuenow="2007"
+            aria-valuetext="2007"
+          >
+
+          <div class="year-range">
+            <span>2007</span>
+            <span>2026</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Map Container -->
+      <section id="map-container" role="img" aria-label="United States map showing SELN membership by state">
+        <!-- Loading indicator -->
+        <div id="loading" aria-live="polite" style="position: absolute;">
+          Loading map data...
+        </div>
+
+        <!-- US Map SVG -->
+        <object data="assets/us.svg" type="image/svg+xml" id="us-map" aria-label="Interactive United States map">
+          <p>Your browser does not support SVG. Please use a modern browser to view this visualization.</p>
+        </object>
+      </section>
+
+      <!-- Legend -->
+      <section class="legend" role="complementary" aria-label="Map legend">
+        <div class="legend-item">
+          <div class="legend-color member" role="img" aria-label="Green color"></div>
+          <span class="legend-text">SELN Member</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color non-member" role="img" aria-label="Grey color"></div>
+          <span class="legend-text">Not a Member</span>
+        </div>
+      </section>
+
+      <!-- Error Display -->
+      <div id="error" role="alert" aria-live="assertive" style="display: none;"></div>
+
+      <!-- ARIA Live Region for Screen Reader Announcements -->
+      <div id="aria-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/dataParser.js"></script>
+  <script src="js/mapController.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
