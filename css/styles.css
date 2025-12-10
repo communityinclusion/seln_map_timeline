@@ -41,6 +41,11 @@ body {
   white-space: nowrap;
   border-width: 0;
 }
+/* no screen reader */
+.no-sr{
+color: var(--member-color);
+
+} 
 
 /* Main Container */
 .container {
