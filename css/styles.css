@@ -43,7 +43,7 @@ body {
 }
 /* no screen reader */
 .no-sr{
-color: var(--member-color);
+color: var(--focus-color);
 
 } 
 
