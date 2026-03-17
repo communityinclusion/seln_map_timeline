@@ -41,6 +41,44 @@ body {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* Skip link — hidden until focused */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: auto;
+  height: auto;
+  padding: 8px 16px;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background-color: var(--focus-color);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
+/* Normalize browser-default italic on address elements */
+address {
+  font-style: normal;
+}
 /* no screen reader */
 .no-sr{
 color: var(--focus-color);

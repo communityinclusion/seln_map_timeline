@@ -1,0 +1,8 @@
+[      48ms] [WARNING] No state code found for: Total for FY @ http://localhost:8080/js/dataParser.js:181
+[      52ms] [ERROR] Error: <svg> attribute height: Expected length, "auto". @ https://d3js.org/d3.v7.min.js:1
+[  148292ms] [WARNING] No state code found for: Total for FY @ http://localhost:8080/js/dataParser.js:181
+[  148295ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/favicon.ico:0
+[  148297ms] [ERROR] Error: <svg> attribute height: Expected length, "auto". @ https://d3js.org/d3.v7.min.js:1
+[  199520ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/favicon.ico:0
+[  199521ms] [WARNING] No state code found for: Total for FY @ http://localhost:8080/js/dataParser.js:181
+[  199526ms] [ERROR] Error: <svg> attribute height: Expected length, "auto". @ https://d3js.org/d3.v7.min.js:1

@@ -143,6 +143,13 @@ class SELNMapApp {
   updateMap(year) {
     this.currentYear = year;
 
+    // Update SVG accessible label to reflect current year
+    const memberCount = this.usStates.filter(d => {
+      const stateCode = this.getStateCodeFromName(d.properties.name);
+      return stateCode ? this.dataParser.isMember(stateCode, year) : false;
+    }).length;
+    this.svg.attr('aria-label', `United States choropleth map showing SELN membership for ${year}. ${memberCount} states are members.`);
+
     // Update states
     const states = this.svg.select('.states')
       .selectAll('path')
@@ -150,6 +157,14 @@ class SELNMapApp {
       .join('path')
       .attr('d', this.path)
       .attr('class', 'state')
+      .attr('tabindex', '0')
+      .attr('role', 'button')
+      .attr('aria-label', d => {
+        const stateName = d.properties.name;
+        const stateCode = this.getStateCodeFromName(stateName);
+        const isMember = stateCode ? this.dataParser.isMember(stateCode, year) : false;
+        return `${stateName}: ${isMember ? 'SELN Member' : 'Not a Member'}`;
+      })
       .attr('fill', d => {
         const stateName = d.properties.name;
         const stateCode = this.getStateCodeFromName(stateName);
@@ -160,7 +175,13 @@ class SELNMapApp {
       .attr('stroke-width', 0.5)
       .style('cursor', 'pointer')
       .on('mouseover', (event, d) => this.handleStateHover(event, d))
-      .on('mouseout', () => this.handleStateOut());
+      .on('mouseout', () => this.handleStateOut())
+      .on('keydown', (event, d) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          this.handleStateKeyboard(d);
+        }
+      });
 
     // Separate states into regular and small states
     const regularStates = this.usStates.filter(d => !this.smallStates[d.properties.name]);
@@ -266,6 +287,21 @@ class SELNMapApp {
     // Remove highlight
     this.svg.selectAll('.state')
       .attr('opacity', 1);
+  }
+
+  /**
+   * Handle state keyboard activation (Enter/Space)
+   * @param {Object} d - State data
+   */
+  handleStateKeyboard(d) {
+    const stateName = d.properties.name;
+    const stateCode = this.getStateCodeFromName(stateName);
+    if (!stateCode) return;
+    const isMember = this.dataParser.isMember(stateCode, this.currentYear);
+    const years = this.dataParser.getCumulativeYears(stateCode, this.currentYear);
+    this.announceToScreenReader(
+      `${stateName}: ${isMember ? 'SELN Member' : 'Not a member'}. ${years} year${years !== 1 ? 's' : ''} of membership.`
+    );
   }
 
   /**
@@ -411,6 +447,43 @@ class SELNMapApp {
 
     // Remove old bars
     bars.exit().remove();
+
+    // Keep accessible hidden table in sync
+    this.updateAccessibleTable(data);
+  }
+
+  /**
+   * Create or update a visually hidden data table for the bar chart
+   * @param {Array} data - Bar chart data [{name, years}]
+   */
+  updateAccessibleTable(data) {
+    let table = document.getElementById('bar-chart-table');
+    if (!table) {
+      table = document.createElement('table');
+      table.id = 'bar-chart-table';
+      table.className = 'sr-only';
+      table.setAttribute('aria-label', 'Years of SELN membership by state');
+      const thead = table.createTHead();
+      const headerRow = thead.insertRow();
+      ['State', 'Years of Membership'].forEach(text => {
+        const th = document.createElement('th');
+        th.setAttribute('scope', 'col');
+        th.textContent = text;
+        headerRow.appendChild(th);
+      });
+      table.createTBody();
+      document.getElementById('years-content').appendChild(table);
+    }
+
+    const tbody = table.tBodies[0];
+    tbody.innerHTML = '';
+    data.forEach(d => {
+      const row = tbody.insertRow();
+      const nameCell = row.insertCell();
+      nameCell.textContent = d.name;
+      const yearsCell = row.insertCell();
+      yearsCell.textContent = d.years;
+    });
   }
 
   /**

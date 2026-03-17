@@ -12,7 +12,7 @@
 </head>
 <body>
   <!-- Skip to main content link for accessibility -->
-  <a href="#main-content" class="sr-only">Skip to main content</a>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <div class="container">
     <!-- Header -->
@@ -39,7 +39,7 @@
         <div class="controls">
           <div class="slider-container">
             <div class="slider-label">
-              <span>Select Year:</span>
+              <label for="year-slider">Select Year:</label>
               <span id="current-year" aria-live="polite">2007</span>
             </div>
 
@@ -65,23 +65,23 @@
         </div>
 
         <!-- Map Container -->
-        <div id="map-container" role="img" aria-label="United States map showing SELN membership by state">
+        <div id="map-container">
           <!-- Loading indicator -->
           <div id="loading" aria-live="polite" style="position: absolute;">
             Loading map data...
           </div>
 
           <!-- D3.js will render the SVG map here -->
-          <svg id="map-svg" aria-label="Interactive United States choropleth map"></svg>
+          <svg id="map-svg" role="group" aria-label="Interactive United States choropleth map"></svg>
         </div>
             <!-- Legend -->
       <section class="legend" role="complementary" aria-label="Map legend">
         <div class="legend-item">
-          <div class="legend-color member" role="img" aria-label="Green color"></div>
+          <div class="legend-color member" role="img" aria-label="Green square indicating SELN Member"></div>
           <span class="legend-text">SELN Member</span>
         </div>
         <div class="legend-item">
-          <div class="legend-color non-member" role="img" aria-label="Grey color"></div>
+          <div class="legend-color non-member" role="img" aria-label="Grey square indicating Not a Member"></div>
           <span class="legend-text">Not a Member</span>
         </div>
       </section>
@@ -122,18 +122,18 @@
   <div class="row mt-3">
     <p>The State Employment Leadership Network (SELN) is a place for states to connect, collaborate, and create cross-community support regarding pressing employment-related issues at state and federal levels for individuals with intellectual and developmental disabilities.  Launched in 2006, the SELN is a joint program of the National Association of State Directors of Developmental Disabilities Services (NASDDDS) and the Institute for Community Inclusion (ICI) at the University of Massachusetts Boston (UMB). State IDD agencies make an annual investment in the SELN and receive guided technical assistance on employment systems change. The timeline below illustrates how our membership has grown, changed and evolved since 2006.</p>
     </div>
-      <h4 class="text-center">For more information:</h4>
+      <h3 class="text-center">For more information:</h3>
 <div class="row text-center">
-    <div class="col-sm">Suzzanne Freeze<br>
+    <address class="col-sm">Suzzanne Freeze<br>
 Project Director<br>
 ICI/UMass Boston<br>
-<a href="mailto:suzzanne.freeze@umb.edu">suzzanne.freeze@umb.edu</a></div>
-    <div class="col-sm">Wesley Anderson<br>
+<a href="mailto:suzzanne.freeze@umb.edu">suzzanne.freeze@umb.edu</a></address>
+    <address class="col-sm">Wesley Anderson<br>
 Director of Employment and Community Services<br>
 NASDDDS<br>
-<a href="mailto:wanderson@nasddds.org">wanderson@nasddds.org</a></div>
+<a href="mailto:wanderson@nasddds.org">wanderson@nasddds.org</a></address>
   </div>
-    <h4 class="text-center"><a href="http://www.selnhub.org" style="text-decoration: none;">www.selnhub.org</a></h4>
+    <p class="text-center"><a href="http://www.selnhub.org">www.selnhub.org</a></p>
   </div>
 
   </footer>
